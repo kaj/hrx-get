@@ -13,6 +13,7 @@ static OTHER_DATA: &str = "<=====> hello.md\
                            \n# Hello world\
                            \nThis is a simple markdown file.\
                            \n\
+                           \n<=====> dir/whatever\
                            \n<=====> foo.txt\
                            \nThis is something else.\n";
 
@@ -66,5 +67,13 @@ fn load_file_fail() {
     assert_eq!(
         Archive::load("no/such/file.hrx".as_ref()).unwrap_err(),
         "No such file or directory (os error 2)"
+    )
+}
+
+#[test]
+fn load_file_bad_format() {
+    assert_eq!(
+        Archive::load("Cargo.toml".as_ref()).unwrap_err(),
+        "No archive boundary found"
     )
 }

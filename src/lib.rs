@@ -41,7 +41,9 @@ impl Archive {
                     let body = &item[1 + nl..];
                     files.insert(name.into(), body.into());
                 } else {
-                    Err(format!("Invalid item: {:?}", item))?
+                    // Directory / empty file
+                    let name = &item[1..];
+                    files.insert(name.into(), "".into());
                 }
             } else {
                 Err(format!("Invalid item: {:?}", item))?
