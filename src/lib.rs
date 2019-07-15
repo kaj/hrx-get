@@ -4,6 +4,23 @@
 //! [https://github.com/google/hrx](https://github.com/google/hrx).
 //!
 //! This crate only supports _reading_ `.hrx` data.
+//!
+//! # Example
+//!
+//! ```
+//! # use hrx_get::Archive;
+//! let archive = Archive::parse(
+//!     "<===> one.txt\n\
+//!      Content of one text file\n\
+//!      <===>\n\
+//!      This is a comment\n\
+//!      <===> subdir/file.txt\n\
+//!      Contents of a file in a subdir.\n\
+//!      <===>\n"
+//! )?;
+//! assert_eq!(archive.get("one.txt"), Some("Content of one text file"));
+//! # Ok::<(), String>(())
+//! ```
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
@@ -34,7 +51,7 @@ impl Archive {
         );
         for item in data[boundary.len() - 1..].split(&boundary) {
             if item == "" || item.starts_with('\n') {
-                eprintln!("Got comment: {:?}", item);
+                // item is a comment, ignore it.
             } else if item.starts_with(' ') {
                 if let Some(nl) = item.find('\n') {
                     let name = &item[1..nl];
