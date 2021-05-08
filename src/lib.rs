@@ -78,6 +78,11 @@ impl Archive {
     pub fn get(&self, name: &str) -> Option<&str> {
         self.files.get(name).map(|s| s.as_ref())
     }
+
+    /// Iterate over (name, content) pairs for the files in the archive.
+    pub fn entries(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.files.iter().map(|(k,v)| (k.as_ref(), v.as_ref()))
+    }
 }
 
 fn find_boundary(data: &str) -> Option<&str> {
