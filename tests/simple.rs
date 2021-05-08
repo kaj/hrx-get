@@ -52,6 +52,11 @@ fn get_other_existing() {
         "# Hello world\nThis is a simple markdown file.\n"
     )
 }
+#[test]
+fn get_existing_empty() {
+    let archive = Archive::parse(OTHER_DATA).unwrap();
+    assert_eq!(archive.get("dir/whatever").unwrap(), "")
+}
 
 #[test]
 fn load_file() {

@@ -47,23 +47,23 @@ impl Archive {
         let mut files = BTreeMap::new();
         let boundary = format!(
             "\n{}",
-            find_boundary(data).ok_or("No archive boundary found".to_string())?
+            find_boundary(data)
+                .ok_or_else(|| "No archive boundary found".to_string())?
         );
         for item in data[boundary.len() - 1..].split(&boundary) {
-            if item == "" || item.starts_with('\n') {
+            if item.is_empty() || item.starts_with('\n') {
                 // item is a comment, ignore it.
-            } else if item.starts_with(' ') {
+            } else if let Some(item) = item.strip_prefix(' ') {
                 if let Some(nl) = item.find('\n') {
-                    let name = &item[1..nl];
+                    let name = &item[..nl];
                     let body = &item[1 + nl..];
                     files.insert(name.into(), body.into());
                 } else {
                     // Directory / empty file
-                    let name = &item[1..];
-                    files.insert(name.into(), "".into());
+                    files.insert(item.into(), String::new());
                 }
             } else {
-                Err(format!("Invalid item: {:?}", item))?
+                return Err(format!("Invalid item: {:?}", item));
             }
         }
         Ok(Archive { files })
@@ -81,7 +81,7 @@ impl Archive {
 
     /// Iterate over (name, content) pairs for the files in the archive.
     pub fn entries(&self) -> impl Iterator<Item = (&str, &str)> {
-        self.files.iter().map(|(k,v)| (k.as_ref(), v.as_ref()))
+        self.files.iter().map(|(k, v)| (k.as_ref(), v.as_ref()))
     }
 }
 
