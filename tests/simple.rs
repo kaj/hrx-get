@@ -70,15 +70,19 @@ fn load_file() {
 #[test]
 fn load_file_fail() {
     assert_eq!(
-        Archive::load("no/such/file.hrx".as_ref()).unwrap_err(),
-        "No such file or directory (os error 2)"
+        Archive::load("no/such/file.hrx".as_ref())
+            .unwrap_err()
+            .to_string(),
+        "Failed to read \"no/such/file.hrx\": No such file or directory (os error 2)"
     )
 }
 
 #[test]
 fn load_file_bad_format() {
     assert_eq!(
-        Archive::load("Cargo.toml".as_ref()).unwrap_err(),
-        "No archive boundary found"
+        Archive::load("Cargo.toml".as_ref())
+            .unwrap_err()
+            .to_string(),
+        "Failed to parse \"Cargo.toml\": No archive boundary found"
     )
 }

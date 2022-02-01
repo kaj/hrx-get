@@ -8,6 +8,8 @@ project more or less adheres to
 
 ## Unreleased
 
+* Breaking: Specific error types (not just a message String).
+  When reading from a file, the path is included in any error.
 * Updated / added some crate metadata, including a changelog.
 
 ## Release 0.1.4

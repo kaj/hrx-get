@@ -8,7 +8,8 @@
 //! # Example
 //!
 //! ```
-//! # use hrx_get::Archive;
+//! # use hrx_get::{Archive, Error};
+//! # fn main() -> Result<(), Error> {
 //! let archive = Archive::parse(
 //!     "<===> one.txt\n\
 //!      Content of one text file\n\
@@ -19,13 +20,13 @@
 //!      <===>\n"
 //! )?;
 //! assert_eq!(archive.get("one.txt"), Some("Content of one text file"));
-//! # Ok::<(), String>(())
+//! # Ok(())
+//! # }
 //! ```
 use std::collections::BTreeMap;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-use std::str::from_utf8;
+use std::fmt::{self, Display};
+use std::fs::read_to_string;
+use std::path::{Path, PathBuf};
 
 /// Parsed Human Readable Archive data.
 #[derive(Debug)]
@@ -35,21 +36,15 @@ pub struct Archive {
 
 impl Archive {
     /// Load hrx data from a file system path.
-    pub fn load(file: &Path) -> Result<Archive, String> {
-        let mut f = File::open(file).map_err(|e| format!("{}", e))?;
-        let mut data = vec![];
-        f.read_to_end(&mut data).map_err(|e| format!("{}", e))?;
-        Archive::parse(from_utf8(&data).map_err(|e| format!("{}", e))?)
+    pub fn load(file: &Path) -> Result<Archive, FileError> {
+        let data = read_to_string(file).map_err(|e| FileError::Io(file.into(), e))?;
+        Archive::parse(&data).map_err(|e| FileError::Data(file.into(), e))
     }
 
     /// Parse hrx data from an in-memory buffer.
-    pub fn parse(data: &str) -> Result<Archive, String> {
+    pub fn parse(data: &str) -> Result<Archive, Error> {
         let mut files = BTreeMap::new();
-        let boundary = format!(
-            "\n{}",
-            find_boundary(data)
-                .ok_or_else(|| "No archive boundary found".to_string())?
-        );
+        let boundary = format!("\n{}", find_boundary(data).ok_or(Error::NoBoundary)?);
         for item in data[boundary.len() - 1..].split(&boundary) {
             if item.is_empty() || item.starts_with('\n') {
                 // item is a comment, ignore it.
@@ -63,7 +58,7 @@ impl Archive {
                     files.insert(item.into(), String::new());
                 }
             } else {
-                return Err(format!("Invalid item: {:?}", item));
+                return Err(Error::InvalidItem(item.into()));
             }
         }
         Ok(Archive { files })
@@ -95,4 +90,52 @@ fn find_boundary(data: &str) -> Option<&str> {
         }
     }
     None
+}
+
+/// An error reading or parsing a .hrx archive.
+#[derive(Debug)]
+pub enum FileError {
+    /// Data error parsing archive
+    Data(PathBuf, Error),
+    /// I/O error reading archive
+    Io(PathBuf, std::io::Error),
+}
+
+impl std::error::Error for FileError {}
+
+impl Display for FileError {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FileError::Data(path, e) => {
+                write!(out, "Failed to parse {:?}: {}", path, e)
+            }
+            FileError::Io(path, e) => {
+                write!(out, "Failed to read {:?}: {}", path, e)
+            }
+        }
+    }
+}
+
+/// An error reading or parsing a .hrx archive.
+#[derive(Debug)]
+pub enum Error {
+    /// No archive bound found
+    NoBoundary,
+    /// Invalid item in archive
+    InvalidItem(String),
+}
+
+impl std::error::Error for Error {}
+
+impl Display for Error {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::NoBoundary => {
+                write!(out, "No archive boundary found")
+            }
+            Error::InvalidItem(item) => {
+                write!(out, "Invalid item: {:?}", item)
+            }
+        }
+    }
 }
