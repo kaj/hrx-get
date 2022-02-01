@@ -1,11 +1,13 @@
 [package]
 name = "hrx-get"
 description = "Reader for Human Readable Archive (.hrx) data"
-version = "0.1.4"
+version = "0.1.5-PRE"
 authors = ["Rasmus Kaj <kaj@kth.se>"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/kaj/hrx-get"
 readme = "README.md"
+categories = ["filesystem"]
+keywords = ["archive", "human", "reader", "readable", "data"]
 edition = "2018"
 
 [dependencies]
